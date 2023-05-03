@@ -1,0 +1,11 @@
+---
+queue: pg
+
+local: /Users/jinwonchoi/github/pending-qeueue-service/db/pending_queue
+
+pg:
+  host: 127.0.0.1
+  port: 55432
+  id: postgres
+  pw: abcd1234
+  db: pending_queue

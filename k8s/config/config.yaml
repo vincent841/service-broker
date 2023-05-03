@@ -1,0 +1,18 @@
+---
+queue: pg
+
+local: /data/pending_queue
+
+pg:
+  host: schevt-db-svc
+  port: 5432
+  id: postgres
+  pw: abcd1234
+  db: schevt
+# history:
+#   host: 34.64.70.246
+#   port: 5432
+#   id: hatiolab
+#   pw: hV{4$*MY<hJEm),~
+#   db: scheduler
+
