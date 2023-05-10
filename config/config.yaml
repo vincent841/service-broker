@@ -1,7 +1,8 @@
 ---
 # local or pg
 queue: local
-local: ../pending_queue
+
+local: ../service_queue
 # pg:
 #   host: xxx.xxx.xxx.xxx
 #   port: 1234

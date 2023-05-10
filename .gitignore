@@ -1,6 +1,13 @@
 .DS_Store
-config.yaml
 !config/config.yaml
+config.yaml
+.DS_Store
+db/*
+!db
+.vscode/*
+service_queue
+src/*_test.py
+!src/test/*_test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
