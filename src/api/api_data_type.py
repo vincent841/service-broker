@@ -1,21 +1,24 @@
 from pydantic import BaseModel, Field
-from typing import List
-
+from typing import Optional
 
 """
 ServiceData Type Definitions
 
 """
 
-class Service(BaseModel):
-    domain: str = Field(default="", title= "domain")
+class ServiceInput(BaseModel):
     application: str = Field(default="", title= "application")
+    group: str = Field(default="", title= "group")
+    operation: str = Field(default="", title= "operation")
+
+class ServiceOutput(BaseModel):
+    application: str = Field(default="", title= "application")
+    group: str = Field(default="", title= "group")
+    operation: str = Field(default="", title= "operation")
+    id: str = Field(default="", title= "service id")
+    topic: str = Field(default="", title= "topic")
     endpoint: str = Field(default="", title= "endpoint")
-    data: dict = Field(default={}, title="user data")
 
 
-class ServiceApiResult(BaseModel):
-    event: str = Field(default="", title="event")
-    message: str = Field(default="", title="message")
-    data: Service = Field(default={}, title="data") 
-
+class ServiceEndpointResult(BaseModel):
+    result: bool = Field(default=False, title= "service endpoint result")

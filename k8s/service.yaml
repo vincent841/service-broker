@@ -2,9 +2,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: pending-queue
-  name: pending-queue-svc
-  namespace: schevt
+    app: service-broker
+  name: service-broker-svc
+  namespace: svcbroker
 spec:
   type: ClusterIP
   ports:
@@ -12,4 +12,4 @@ spec:
       port: 80
       targetPort: 9902
   selector:
-    app: pending-queue
+    app: service-broker

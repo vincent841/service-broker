@@ -3,25 +3,25 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
-    app: pending-queue
-  name: pending-queue
-  namespace: schevt
+    app: service-broker
+  name: service-broker
+  namespace: svcbroker
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: pending-queue
+      app: service-broker
   serviceName: "schevtmgr"
   template:
     metadata:
       labels:
-        app: pending-queue
+        app: service-broker
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-        - image: hatiolab/pending-queue:0.0.1
+        - image: hatiolab/service-broker:0.0.1
           imagePullPolicy: Always
-          name: pending-queue
+          name: service-broker
           resources:
             requests:
               cpu: 128m
@@ -42,4 +42,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: pending-queue-cfgmap
+            name: service-broker-cfgmap

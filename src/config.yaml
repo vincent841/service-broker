@@ -1,7 +1,7 @@
 ---
 queue: pg
 
-local: /Users/jinwonchoi/github/pending-qeueue-service/db/pending_queue
+local: /Users/jinwonchoi/github/service-broker/db/service-db
 
 pg:
   host: 127.0.0.1

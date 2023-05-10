@@ -1,7 +1,7 @@
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: pending-queue-storage
+  name: servic-broker-storage
 provisioner: kubernetes.io/aws-ebs
 parameters:
   type: gp2
@@ -15,34 +15,34 @@ volumeBindingMode: Immediate
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pending-queue-pv-claim
-  namespace: schevt
+  name: servic-broker-pv-claim
+  namespace: svcbroker
   labels:
-    app: pending-queue
+    app: servic-broker
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 20Gi
-  storageClassName: pending-queue-storage
+  storageClassName: servic-broker-storage
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pending-queue
-  namespace: schevt
+  name: servic-broker
+  namespace: svcbroker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pending-queue
+      app: servic-broker
       tier: postgresql
   template:
     metadata:
       labels:
-        app: pending-queue
+        app: servic-broker
         tier: postgresql
     spec:
       containers:
@@ -53,23 +53,23 @@ spec:
             - containerPort: 5432
           envFrom:
             - secretRef:
-                name: pending-queue-secret
+                name: servic-broker-secret
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: pending-queue-pv
+              name: servic-broker-pv
       volumes:
-        - name: pending-queue-pv
+        - name: servic-broker-pv
           persistentVolumeClaim:
-            claimName: pending-queue-pv-claim
+            claimName: servic-broker-pv-claim
 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pending-queue-secret
-  namespace: schevt
+  name: servic-broker-secret
+  namespace: svcbroker
 stringData:
-  POSTGRES_DB: schevt
+  POSTGRES_DB: svcbroker
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: abcd1234
   PGDATA: /var/lib/postgresql/data/pgdata
@@ -79,9 +79,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: pending-queue
-  name: pending-queue-svc
-  namespace: schevt
+    app: servic-broker
+  name: servic-broker-svc
+  namespace: svcbroker
 spec:
   type: ClusterIP
   ports:
@@ -89,4 +89,4 @@ spec:
       port: 5432
       targetPort: 5432
   selector:
-    app: pending-queue
+    app: servic-broker

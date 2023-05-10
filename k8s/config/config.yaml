@@ -1,7 +1,7 @@
 ---
 queue: pg
 
-local: /data/pending_queue
+local: /data/service_queue
 
 pg:
   host: schevt-db-svc

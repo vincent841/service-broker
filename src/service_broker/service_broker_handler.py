@@ -1,4 +1,5 @@
-import json
+
+import uuid
 from deepdiff import DeepDiff
 from datetime import datetime, timezone
 from fastapi import HTTPException
@@ -6,6 +7,7 @@ from fastapi import HTTPException
 from config import Config
 from direct_queue.local_queue import LocalQueue
 from direct_queue.pg_queue import PGQueue
+from api.api_data_type import ServiceInput
 
 
 import sys
@@ -19,7 +21,7 @@ log_warning = log_message.warning
 log_error = log_message.error
 
 
-class SercieBrokerHandler:
+class ServiceBrokerHandler:
     # singleton constructor set
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, "_instance"):
@@ -34,9 +36,9 @@ class SercieBrokerHandler:
                 # TODO: need to the generalization of schedule_queue creation...
                 (queue_type, queue_info) = Config.queue_info()
                 if queue_type == "local":
-                    self.pending_queue_db = LocalQueue(queue_info)
+                    self.service_db = LocalQueue(queue_info)
                 elif queue_type == "pg":
-                    self.pending_queue_db = PGQueue(queue_info)
+                    self.service_db = PGQueue(queue_info)
                 
                 cls._init = True
             except Exception as ex:
@@ -48,29 +50,109 @@ class SercieBrokerHandler:
         except Exception as ex:
             log_error(f"Initializaiton Error: {ex}")
 
-    def register(self, pending_event: dict):
+    def register_service(self, new_service: ServiceInput):
         try:
-            # TODO: check the duplicated event here...
-            db_key = self.create_db_key(pending_event)
+            # generate a service id
+            service_id = uuid.uuid4()
+            
+            new_service_dict = new_service.dict()
+            new_service_dict["id"] = f"{service_id}"
+            new_service_dict["topic"] = f"{service_id}"
+            new_service_dict["endpoint"] = f"/endpoint/{new_service_dict['application']}/{new_service_dict['group']}/{new_service_dict['operation']}/{service_id}"
 
             # store the updated schedule event
-            self.pending_queue_db.put(db_key, pending_event)
-            return pending_event
+            self.service_db.put(service_id, new_service_dict)
+            return new_service_dict
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"{ex}") 
         except Exception as ex:
-            print(f"Exception: {ex}")
-            raise HTTPException(status_code=500, detail=f"Exception: {ex}")
+            raise HTTPException(status_code=500, detail=f"{ex}")
 
-    def get_list(self, tag: str = ""):
+    def get_service_list(self, application: str, group: str, operation: str):
         result_list = list()
         try:
-            key_value_list = self.pending_queue_db.get_key_value_list()
+            key_value_list = self.service_db.get_key_value_list()
             for key_value in key_value_list:
-                (_, pending_event) = key_value
-                if tag == pending_event["tag"]:
-                    result_list.append(pending_event)
+                (_, service) = key_value
+                if (not application or service["application"] == application) and (not group or service["group"] == group) and (not operation or service["operation"] == operation):
+                    result_list.append(service)
             return result_list
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"{ex}") 
+        except Exception as ex:
+            raise HTTPException(status_code=500, detail=f"{ex}")
+        
+    def get_service_list_with_id(self, id: str):
+        found_service = None
+        try:
+            key_value_list = self.service_db.get_key_value_list()
+            for key_value in key_value_list:
+                (_, service) = key_value
+                if service["id"] == id:
+                    found_service = service
+            if not found_service:
+                raise ValueError
+                    
+            return found_service
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"Exception: {ex}")
         except Exception as ex:
             raise HTTPException(status_code=500, detail=f"Exception: {ex}")
+        
+    def delete_service_list(self, service: ServiceInput):
+        result_list = list()
+        try:
+            key_value_list = self.service_db.get_key_value_list()
+            for key_value in key_value_list:
+                (key, service) = key_value
+                if service["application"] == service.application and service["group"] == service.group and service["operation"] == service.operation:
+                    result_list.append(service)
+                    self.service_db.pop(key)
+            if not result_list:
+                raise ValueError
+            return result_list
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"{ex}") 
+        except Exception as ex:
+            raise HTTPException(status_code=500, detail=f"{ex}")
+        
+    def delete_service_with_id(self, id: str):
+        found_service = None
+        try:
+            key_value_list = self.service_db.get_key_value_list()
+            for key_value in key_value_list:
+                (key, service) = key_value
+                if service["id"] == id:
+                    found_service = service
+                    self.service_db.pop(key)
+            if not found_service:
+                raise ValueError
+            return found_service
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"{ex}") 
+        except Exception as ex:
+            raise HTTPException(status_code=500, detail=f"{ex}")
 
 
-  
+    def handle_endpoint(self, application: str, group: str, operation: str, id: str):
+        log_info(f"handle_endpoint: {application}, {group}, {operation}, {id}")
+        try:
+            service_list = self.get_service_list(application, group, operation)
+            if not service_list:
+                raise ValueError
+            
+            found_service = None
+            for service in service_list:
+                if service["id"] == id:   
+                    found_service = service
+            if not found_service:
+                raise ValueError
+            
+            # TODO: notificate found_service to the service here.
+
+            return found_service       
+        except ValueError as ex:
+            raise HTTPException(status_code=404, detail=f"{ex}") 
+        except Exception as ex:
+            raise HTTPException(status_code=500, detail=f"{ex}")
+        
