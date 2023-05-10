@@ -1,7 +1,5 @@
 
 import uuid
-from deepdiff import DeepDiff
-from datetime import datetime, timezone
 from fastapi import HTTPException
 
 from config import Config
